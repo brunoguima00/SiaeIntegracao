@@ -1,0 +1,26 @@
+## Visual Studio Superior (Pasta que está a causar o erro)
+.vs/
+
+## Compilação e Binários
+[Bb]in/
+[Oo]bj/
+[Rr]elease/
+[Dd]ebug/
+x64/
+x86/
+
+## Ficheiros de utilizador e cache
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+## Testes e Cobertura de Código
+TestResults/
+*.sequencediagram.layout
+*.vsp
+*.vspx
+
+## Ficheiros do SO
+Thumbs.db
+.DS_Store

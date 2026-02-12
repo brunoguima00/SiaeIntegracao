@@ -1,0 +1,57 @@
+﻿@page "/dashboard"
+@rendermode InteractiveServer
+@using SiaeIntegracao.src.Services
+@inject UserSession userSession
+@inject NavigationManager NavigationManager
+@inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedLocalStorage ProtectedLocalStore
+
+@if (userSession.Id == 0)
+{
+    <div class="d-flex align-items-center p-3">
+        <div class="spinner-border text-primary me-2" role="status"></div>
+        <span>Verificando acesso...</span>
+    </div>
+}
+else
+{
+    <h1>Bem-vindo, @userSession.Name</h1>
+    @* O conteúdo da sua página aqui *@
+}
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Se a memória Scoped resetou (ficou 0), vamos buscar no "HD"
+            if (userSession.Id == 0)
+            {
+                try
+                {
+                    var idResult = await ProtectedLocalStore.GetAsync<int>("user_id");
+                    var nameResult = await ProtectedLocalStore.GetAsync<string>("user_name");
+
+                    if (idResult.Success && idResult.Value > 0)
+                    {
+                        // Preenche a sessão local da página
+                        userSession.SetUser(idResult.Value, nameResult.Value ?? "Usuário", "");
+
+                        // AGORA SIM: Como estamos dentro da página,
+                        // o StateHasChanged vai forçar o sumiço do "Carregando"
+                        StateHasChanged();
+                    }
+                    else
+                    {
+                        // Se não tem nada no navegador, é invasor ou deslogou
+                        NavigationManager.NavigateTo("/");
+                    }
+                }
+                catch (Exception)
+                {
+                    // Erro de leitura/criptografia: volta pro início
+                    NavigationManager.NavigateTo("/");
+                }
+            }
+        }
+    }
+}

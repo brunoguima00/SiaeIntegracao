@@ -1,0 +1,110 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using SiaeIntegracao.src.Application.UseCases
+@using SiaeIntegracao.src.Domain.Dtos
+@using SiaeIntegracao.src.Services
+@using System.Diagnostics
+@inject AuthUserUseCase AuthUserUseCase
+@inject NavigationManager NavigationManager
+@inject UserSession UserSession
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedLocalStorage ProtectedLocalStore
+
+@* O estilo abaixo garante que a página de login ocupe a tela toda e ignore o menu lateral padrão se necessário *@
+<div class="login-container d-flex align-items-center justify-content-center bg-light min-vh-100">
+    <div class="card border-0 shadow-lg rounded-4" style="max-width: 420px; width: 100%;">
+        <div class="card-body p-5">
+
+            <div class="text-center mb-4">
+                <div class="bg-primary d-inline-block p-3 rounded-circle mb-3 shadow-sm">
+                    <i class="bi bi-person-lock text-white fs-1"></i>
+                </div>
+                <h2 class="fw-bold">SIAE</h2>
+                <p class="text-muted small">Entre com suas credenciais</p>
+            </div>
+
+            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+                <AntiforgeryToken />
+                <DataAnnotationsValidator />
+
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="loginModel.Email" class="form-control" id="emailInput" placeholder="nome@exemplo.com" />
+                    <label for="emailInput">E-mail</label>
+                    <ValidationMessage For="@(() => loginModel.Email)" class="text-danger small" />
+                </div>
+
+                <div class="form-floating mb-4">
+                    <InputText @bind-Value="loginModel.Password" type="password" class="form-control" id="passInput" placeholder="Senha" />
+                    <label for="passInput">Senha</label>
+                    <ValidationMessage For="@(() => loginModel.Password)" class="text-danger small" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger py-2 text-center mb-4" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> @errorMessage
+                    </div>
+                }
+
+                <button type="submit" class="btn btn-primary w-100 py-3 rounded-3 shadow-sm fw-bold" disabled="@isProcessing">
+                    @if (isProcessing)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        <span>Acessando...</span>
+                    }
+                    else
+                    {
+                        <span>ENTRAR</span>
+                    }
+                </button>
+            </EditForm>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Isso remove o layout padrão do Blazor apenas nesta página, se você quiser a tela cheia */
+    body { background-color: #f8f9fa; }
+    .login-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; }
+</style>
+
+@code {
+    private LoginRequestDto loginModel = new();
+    private string? errorMessage;
+    private bool isProcessing = false;
+
+    private async Task HandleLogin()
+    {
+        isProcessing = true;
+        errorMessage = null;
+
+        try
+        {
+            var user = await AuthUserUseCase.AuthUser(loginModel.Email, loginModel.Password);
+
+            if (user != null)
+            {
+                // Salvamos na sessão para usar nas queries depois
+                UserSession.SetUser(user.Id ?? 0, user.Name, user.Email);
+                await ProtectedLocalStore.SetAsync("user_id", user.Id);
+                await ProtectedLocalStore.SetAsync("user_name", user.Name);
+                NavigationManager.NavigateTo("/dashboard");
+                
+            }
+            else
+            {
+                errorMessage = "E-mail ou senha inválidos.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Erro ao conectar ao servidor.";
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+}

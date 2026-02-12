@@ -1,0 +1,138 @@
+﻿@page "/prestacao"
+@rendermode InteractiveServer
+@using SiaeIntegracao.src.Domain.Dtos
+@using System.Diagnostics
+@using static System.Net.WebRequestMethods
+@inject HttpClient Http
+
+<div class="container-fluid">
+    <h3 class="mb-4">Nova Prestação de Contas</h3>
+
+    <div class="card mb-4 border-primary">
+        <div class="card-body bg-light">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="fw-bold">Unidade / Projeto</label>
+                    <select class="form-select" @onchange="OnUnidadeChanged">
+                        <option>Selecione a unidade...</option>
+
+                        @foreach (var u in unidades)
+                        {
+                            // O usuário vê o Nome, mas o C# captura o IdeProjeto
+                            <option value="@u.Projeto">@u.NomeFilial</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="fw-bold">Data</label>
+                    <input type="date" class="form-control" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    Registrar Lançamento (Venda ou Despesa)
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-5">
+                            <label>Tipo de Lançamento</label>
+                            <select class="form-select">
+                                <option>Selecione (ex: Rotativo, Convênio...)</option>
+                                @foreach (var t in tiposLancamento)
+                                {
+                                    <option value="@t.IdeLancamento">@t.DescricaoLancamento</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label>Quantidade</label>
+                            <input type="number" class="form-control" placeholder="0" />
+                        </div>
+                        <div class="col-md-3">
+                            <label>Valor Unitário</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R$</span>
+                                <input type="number" class="form-control" placeholder="0,00" />
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-success w-100">
+                                <i class="oi oi-plus"></i> Gravar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // 1. Onde vamos guardar as unidades que vêm da API
+    public List<FilialDto> unidades = new();
+
+    // 2. Variável para guardar qual unidade o usuário clicou
+    private string unidadeSelecionada = "";
+
+    // 3. O "Power On": Esse método roda assim que a tela abre
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Debug.WriteLine(">>> O CÓDIGO RODOU! TENTANDO BUSCAR DADOS..."); // Isso tem que aparecer no F12
+            try
+            {
+                var retorno = await Http.GetFromJsonAsync<List<FilialDto>>("api/Units/allowed/1");
+                if (retorno != null)
+                {
+                    unidades = retorno;
+                    Debug.WriteLine($">>> CHEGARAM {unidades.Count} UNIDADES!");
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($">>> ERRO NA BUSCA: {ex.Message}");
+            }
+        }
+    }
+    private List<EntryTypeDto> tiposLancamento = new();
+
+    // 2. A função que "ouve" a mudança da unidade
+    private async Task OnUnidadeChanged(ChangeEventArgs e)
+    {
+        unidadeSelecionada = e.Value?.ToString() ?? "";
+
+        if (!string.IsNullOrEmpty(unidadeSelecionada))
+        {
+            try
+            {
+                Debug.WriteLine(">>> O CÓDIGO RODOU! TENTANDO BUSCAR DADOS..."); // Isso tem que aparecer no F12
+                // Substitua 'api/entries/project/SIAE' pela sua rota real de tipos
+                var retorno = await Http.GetFromJsonAsync<List<EntryTypeDto>>($"api/EntryType/entryTypes/{unidadeSelecionada}");
+
+                if (retorno != null)
+                {
+                    tiposLancamento = retorno;
+                    Debug.WriteLine($">>> CHEGARAM {tiposLancamento.Count} TIPOS DE LANÇAMENTO PARA A UNIDADE {unidadeSelecionada}!");
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($">>> ERRO AO BUSCAR TIPOS: {ex.Message}");
+            }
+        }
+    }
+    // Classe simples para o C# entender o JSON das unidades
+    public class UnidadeDto
+    {
+        public string ideProjeto { get; set; } = "";
+        public string nomProjeto { get; set; } = "";
+    }
+}
