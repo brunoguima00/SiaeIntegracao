@@ -9,10 +9,12 @@ namespace SiaeIntegracao.src.Api.Controllers
     public class CapaPcController : ControllerBase
     {
         private readonly CreateCapaPcUseCase _createCapaPcUseCase;
+        private readonly GetCapaPcOnlineByDate _getCapaPcOnlineByDate;
 
-        public CapaPcController(CreateCapaPcUseCase createCapaPcUseCase)
+        public CapaPcController(CreateCapaPcUseCase createCapaPcUseCase, GetCapaPcOnlineByDate getCapaPcOnlineByDate)
         {
             _createCapaPcUseCase = createCapaPcUseCase;
+            _getCapaPcOnlineByDate = getCapaPcOnlineByDate;
         }
         [HttpPost]
         [Route("createCapaPC")]
@@ -21,6 +23,21 @@ namespace SiaeIntegracao.src.Api.Controllers
             try
             {
                 var result = await _createCapaPcUseCase.Execute(capaPcOnlineDto);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (not implemented here)
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+        [HttpGet]
+        [Route("getCapaPCByDate/{projeto}/date/{datePc}")]
+        public async Task<IActionResult> GetCapaPcByDate(string projeto, DateOnly datePc)
+        {
+            try
+            {
+                var result = await _getCapaPcOnlineByDate.Execute(projeto, datePc);
                 return Ok(result);
             }
             catch (Exception ex)

@@ -15,11 +15,11 @@ namespace SiaeIntegracao.src.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<List<CapaPcOnlineDto>> GetCapaPcOnlineByDate(DateOnly datePc)
+        public async Task<List<CapaPcOnlineDto>> GetCapaPcOnlineByDate(string projeto, DateOnly datePc)
         {
             return await (from capa in _context.PfCapaPcOnlines
                           join tipo in _context.PfTipoLanctos on capa.IdeLancamento equals tipo.IdeLancamento
-                          where capa.DataPc == datePc
+                          where capa.DataPc == datePc && capa.IdePojeto == projeto
                           select new CapaPcOnlineDto
                           {
                               IdLancamento = capa.IdLancamento,

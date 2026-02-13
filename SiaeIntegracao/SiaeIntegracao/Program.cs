@@ -37,6 +37,7 @@ builder.Services.AddScoped<GetAllowedUnitsUseCase>();
 builder.Services.AddScoped<GetDocumentsTypeUseCase>();
 builder.Services.AddScoped<GetAllEntryTypeByProjetoUseCase>();
 builder.Services.AddScoped<CreateCapaPcUseCase>();
+builder.Services.AddScoped<GetCapaPcOnlineByDate>();
 //Others
 builder.Services.AddScoped<UserSession>();
 
