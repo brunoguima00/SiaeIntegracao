@@ -24,7 +24,11 @@ namespace SiaeIntegracao.src.Infrastructure.Repositories
                     NomeDocumento = dt.NomeDocumento,
                     TipoDocumento = dt.TipoDocumento,
                     Contabiliza = dt.Contabiliza,
-                    DataCriacao = dt.DataCriacao
+                    DataCriacao = dt.DataCriacao,
+                    CodAgente = dt.CodAgente,
+                    Banco = dt.Banco,
+                    CodAgencia = dt.CodAgencia,
+                    ContaCorrente = dt.ContaCorrente
                 }).ToListAsync();
 
         }

@@ -1,14 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SiaeIntegracao.src.Application.UseCases;
+using SiaeIntegracao.src.Domain.Dtos;
 
 namespace SiaeIntegracao.src.Api.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class DocumetsTypeController : ControllerBase
+    public class DocumentsTypeController : ControllerBase
     {
         private readonly GetDocumentsTypeUseCase _getDocumentsTypeUseCase;
-        public DocumetsTypeController(GetDocumentsTypeUseCase getDocumentsTypeUseCase)
+        public DocumentsTypeController(GetDocumentsTypeUseCase getDocumentsTypeUseCase)
         {
             _getDocumentsTypeUseCase = getDocumentsTypeUseCase;
         }

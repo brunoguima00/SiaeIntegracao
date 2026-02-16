@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using SiaeIntegracao.Components;
 using SiaeIntegracao.src.Application.UseCases;
 using SiaeIntegracao.src.Domain.Interfaces;
 using SiaeIntegracao.src.Infrastructure.Data.Context;
 using SiaeIntegracao.src.Infrastructure.Repositories;
 using SiaeIntegracao.src.Services;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,12 +27,35 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+// JWT Authentication
+var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
+
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = false; // Em prod, mude para true
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
+});
+
+
 //Repositores
 builder.Services.AddScoped<IUserRepository,UserRepository>();
 builder.Services.AddScoped<IUnitRepository, UnitRepository>();
 builder.Services.AddScoped<IDocumentsType, DocumentsTypeRepository>();
 builder.Services.AddScoped<IEntryTypeRepository, EntryTypeRepository>();
 builder.Services.AddScoped<ICapaPcOnlineRepository, CapaPcOnlineRepository>();
+builder.Services.AddScoped<IDocumentsRepository, DocumentsRepository>();
 //UseCases
 builder.Services.AddScoped<CreateUserUseCase>();
 builder.Services.AddScoped<AuthUserUseCase>();
@@ -38,6 +64,13 @@ builder.Services.AddScoped<GetDocumentsTypeUseCase>();
 builder.Services.AddScoped<GetAllEntryTypeByProjetoUseCase>();
 builder.Services.AddScoped<CreateCapaPcUseCase>();
 builder.Services.AddScoped<GetCapaPcOnlineByDate>();
+builder.Services.AddScoped<GetDocumentsByDateUseCase>();
+builder.Services.AddScoped<CreateDocumentsUseCase>();
+builder.Services.AddScoped<DeleteDocumentByIdUseCase>();
+builder.Services.AddScoped<UpdateCapaPcByDateUseCase>();
+builder.Services.AddScoped<UpdateDocumentsStatusByDateUseCase>();
+builder.Services.AddScoped<DeleteCapaPcByIdUseCase>();
+
 //Others
 builder.Services.AddScoped<UserSession>();
 
@@ -49,6 +82,8 @@ builder.Services.AddScoped(sp =>
     };
     return new HttpClient(handler) { BaseAddress = new Uri("https://localhost:7157/") };
 });
+
+builder.Services.AddScoped<ApiService>();
 
 
 var app = builder.Build();

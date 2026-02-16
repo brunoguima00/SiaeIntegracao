@@ -7,6 +7,7 @@
 @inject AuthUserUseCase AuthUserUseCase
 @inject NavigationManager NavigationManager
 @inject UserSession UserSession
+@inject HttpClient Http
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject ProtectedLocalStorage ProtectedLocalStore
 
@@ -81,22 +82,36 @@
 
         try
         {
-            var user = await AuthUserUseCase.AuthUser(loginModel.Email, loginModel.Password);
+            isProcessing = true;
 
-            if (user != null)
+            // 1. Chamada para a API (O 'crachá' vem daqui)
+            var response = await Http.PostAsJsonAsync("api/Auth/login", loginModel);
+
+            if (response.IsSuccessStatusCode)
             {
-                // Salvamos na sessão para usar nas queries depois
-                UserSession.SetUser(user.Id ?? 0, user.Name, user.Email);
-                await ProtectedLocalStore.SetAsync("user_id", user.Id);
-                await ProtectedLocalStore.SetAsync("user_name", user.Name);
-                NavigationManager.NavigateTo("/dashboard");
-                
+                // 2. Desempacota o Token e os dados do usuário
+                var result = await response.Content.ReadFromJsonAsync<LoginResponseDto>();
+
+                // 3. Salva o TOKEN (o crachá) e não apenas o nome/id
+                await ProtectedLocalStore.SetAsync("authToken", result.Token);
+                await ProtectedLocalStore.SetAsync("user_name", result.Name);
+                await ProtectedLocalStore.SetAsync("user_id", result.UserId);
+
+                var testeLeitura = await ProtectedLocalStore.GetAsync<long>("user_id");
+                Console.WriteLine($">>> LOGIN: Teste de persistência - Gravado: {result.UserId}, Lido agora: {testeLeitura.Value}");
+
+                // 4. Sua sessão agora é alimentada pelo que veio da API
+                UserSession.SetUser(result.UserId, result.Name, loginModel.Email);
+
+                await Task.Delay(100);
+                NavigationManager.NavigateTo("/dashboard", forceLoad: true);
             }
             else
             {
                 errorMessage = "E-mail ou senha inválidos.";
             }
         }
+        // ... resto do catch
         catch (Exception ex)
         {
             errorMessage = "Erro ao conectar ao servidor.";

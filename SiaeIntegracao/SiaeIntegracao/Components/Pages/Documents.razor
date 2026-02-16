@@ -1,0 +1,514 @@
+﻿@page "/documentos"
+@rendermode InteractiveServer
+@using SiaeIntegracao.src.Domain.Dtos
+@using System.Diagnostics
+@using static System.Net.WebRequestMethods
+@inject HttpClient Http
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using System.Net.Http.Headers
+@using SiaeIntegracao.src.Services
+@inject ProtectedLocalStorage ProtectedLocalStore
+@inject NavigationManager NavigationManager
+@inject ApiService Api
+
+@if(isAuthorized)
+{
+    <div class="container-fluid">
+        @if (exibirSucesso)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>Sucesso!</strong> O lançamento foi registrado no banco de dados.
+                <button type="button" class="btn-close" @onclick="() => exibirSucesso = false"></button>
+            </div>
+        }
+        <h3 class="mb-4">Nova Prestação de Contas</h3>
+
+        <div class="card mb-4 border-primary">
+            <div class="card-body bg-light">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="fw-bold">Unidade / Projeto</label>
+                        <select class="form-select" @onchange="OnUnidadeChanged">
+                            <option>Selecione a unidade...</option>
+
+                            @foreach (var u in unidades)
+                            {
+                                // O usuário vê o Nome, mas o C# captura o IdeProjeto
+                                <option value="@u.Projeto">@u.NomeFilial</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="fw-bold">Data</label>
+                        @* Remova o @bind e use essa combinação: *@
+                        <input type="date" class="form-control"
+                               value="@dataSelecionada.ToString("yyyy-MM-dd")"
+                               @onchange="OnDataChanged" />
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-success" disabled="@isProcessado" @onclick="UpdateStatusToProcessado">
+                            <i class="oi oi-plus"></i> Enviar Prestação
+                        </button>                     
+                    </div>
+                </div>
+            </div>
+        </div>
+        @* Começa a div dos cards*@
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="row h-100">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="card shadow h-100 py-2 border-0 bg-info text-white">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-uppercase mb-1" style="font-size: 0.75rem;">Total Documentos</div>
+                                <div class="h5 mb-0 font-weight-bold">@documentosDia.Sum(x => x.Valor ?? 0).ToString("C2")</div>
+                                <div class="small">Qtd: @documentosDia.Count</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card shadow h-100 py-2 border-0 bg-dark text-white">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-uppercase mb-1" style="font-size: 0.75rem;">Total de Lançamentos</div>
+                                <div class="h5 mb-0 font-weight-bold">@lancamentosDia.Sum(x => (decimal)(x.Valor ?? 0)).ToString("C2")</div>
+                                <div class="small">Qtd: @lancamentosDia.Count</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100 border-primary">
+                    <div class="card-body d-flex flex-column">
+                        <label class="fw-bold mb-2"><i class="bi bi-chat-left-text"></i> Observações da Prestação</label>
+                        <textarea class="form-control flex-grow-1"
+                              placeholder="Digite aqui observações gerais sobre a movimentação deste dia..."
+                              style="min-height: 80px; resize: none;"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @* Começa a div do form*@
+        <div class="card-body">
+            <div class="row g-3">
+                @* --- Linha Original: Seleção e Valor --- *@
+                <div class="col-md-5">
+                    <label class="fw-bold">Tipo de Lançamento</label>
+                    <select class="form-select" disabled="@isProcessado" @onchange="OnTipoChanged">
+                        <option disabled="@isProcessado">Selecione (ex: Depósito, Sem Parar...)</option>
+                        @foreach (var t in tiposDocumentos)
+                        {
+                            <option value="@t.Id">@t.NomeDocumento</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="fw-bold">Valor</label>
+                    <div class="input-group">
+                        <span class="input-group-text">R$</span>
+                        <input type="number" class="form-control" placeholder="0,00" disabled="@isProcessado" @bind="valor" />
+                    </div>
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-success w-100"  disabled="@isProcessado" @onclick="GravarLancamento">
+                        <i class="oi oi-plus"></i> Gravar
+                    </button>
+                </div>
+
+                @* --- SEÇÃO DINÂMICA: DADOS BANCÁRIOS (Aparece se for Depósito) --- *@
+                @* Estou assumindo que o CodDocumento para depósito seja "1" ou contenha "Depósito" *@
+                @* <div class="alert alert-warning">
+                <strong>Debug:</strong> @tipoSelecionado?.NomeDocumento <br />
+                <strong>Tipo:</strong> [@tipoSelecionado?.TipoDocumento] <br />
+                <strong>Banco no Objeto:</strong> @(string.IsNullOrEmpty(tipoSelecionado?.Banco) ? "Vazio no C#" : tipoSelecionado.Banco)
+            </div> *@
+                @if (tipoSelecionado?.TipoDocumento?.Contains("D", StringComparison.OrdinalIgnoreCase) ?? false)
+                {
+                    <div class="col-12">
+                        <div class="p-3 border rounded bg-light">
+                            <div class="row g-3">
+                                <div class="col-md-2">
+                                    <label class="small text-muted">Banco</label>
+                                    <input type="text" class="form-control form-control-sm" value="@tipoSelecionado?.Banco" disabled />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="small text-muted">Agência</label>
+                                    <input type="text" class="form-control form-control-sm" value="@tipoSelecionado?.CodAgencia" disabled />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="small text-muted">Conta</label>
+                                    <input type="text" class="form-control form-control-sm" value="@tipoSelecionado?.ContaCorrente" disabled />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="small text-muted">Data Depósito</label>
+                                    <input type="date" class="form-control form-control-sm" @bind="dataDeposito" "  />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="small text-muted">Identificação</label>
+                                    <input type="text" class="form-control form-control-sm" value="DEP-SIAE-UNIT" />
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @* --- CAMPO DE OBSERVAÇÃO --- *@
+                @*  <div class="col-12 mt-2">
+                <label class="fw-bold">Observação</label>
+                <textarea class="form-control" rows="2" placeholder="Digite aqui observações relevantes sobre este documento..."></textarea>
+            </div> *@
+            </div>
+        </div>
+        <div class="mt-4 shadow-sm p-3 bg-white rounded">
+            <h5 class="mb-3"><i class="bi bi-list-check"></i> Lançamentos Realizados</h5>
+
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Lançamento</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (documentosDia.Any())
+                    {
+                        @foreach (var item in documentosDia)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.NomeDocumento</td>
+
+                                <td>@item.Valor?.ToString("C2")</td>
+                                <td>@item.Status</td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-danger" title="Excluir" disabled="@isProcessado"  @onclick="() => Deletar(item.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Nenhum lançamento encontrado para esta data.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+} else
+{
+    <p>Verificando acesso...</p>
+}
+
+
+
+@code {
+
+    private List<DocumentsTypeDto> tiposDocumentos = new();
+    private DocumentsTypeDto? tipoSelecionado;
+    private int quantidade;
+    private decimal valor;
+    private double valorDouble;
+    private DateTime dataSelecionada = DateTime.Today;
+    private bool exibirSucesso = false;
+    private DateOnly dataDeposito = DateOnly.FromDateTime(DateTime.Now).AddDays(1); // Data futura como exemplo
+    private List<DocumentsDto> documentosDia = new();
+    private List<CapaPcOnlineDto> lancamentosDia = new();
+    private bool isAuthorized = false;
+    bool isProcessado => documentosDia.Any(x => x.Status == "Processado");
+    // 1. Onde vamos guardar as unidades que vêm da API
+    public List<FilialDto> unidades = new();
+
+    // 2. Variável para guardar qual unidade o usuário clicou
+    private string unidadeSelecionada = "";
+
+    // 3. O "Power On": Esse método roda assim que a tela abre
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var userId = await ProtectedLocalStore.GetAsync<long>("user_id");
+
+            if(userId.Success || userId.Value > 0)
+            {              
+                isAuthorized = true;
+                StateHasChanged();
+            } else
+            {
+                NavigationManager.NavigateTo("/");
+            }
+
+            try
+            {
+                var retorno = await Http.GetFromJsonAsync<List<FilialDto>>($"api/Units/allowed/{userId.Value}");
+
+                if (retorno != null)
+                {
+                    unidades = retorno;
+                    Debug.WriteLine($">>> CHEGARAM {unidades.Count} UNIDADES!");
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($">>> ERRO NA BUSCA: {ex.Message}");
+            }
+        }
+    }
+
+
+    // 2. A função que "ouve" a mudança da unidade
+    private async Task OnUnidadeChanged(ChangeEventArgs e)
+    {
+        unidadeSelecionada = e.Value?.ToString() ?? "";
+
+        if (!string.IsNullOrEmpty(unidadeSelecionada))
+        {
+            try
+            {
+                var retorno = await Api.GetAsync<List<DocumentsTypeDto>>($"api/DocumentsType/get-documents-type");
+                if (retorno != null)
+                {
+                    tiposDocumentos = retorno;
+                    Debug.WriteLine($">>> CHEGARAM {tiposDocumentos.Count} TIPOS DE DOCUMENTOS");
+                    StateHasChanged();
+                }
+                await CarregarLancamentos();
+                await CarregarDocumentos();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($">>> ERRO NA BUSCA: {ex.Message}");
+            }
+        }
+    }
+    private void OnTipoChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id))
+        {
+            // Busca na lista o objeto completo que veio da API
+            tipoSelecionado = tiposDocumentos.FirstOrDefault(x => x.Id == id);
+            StateHasChanged();
+        }
+    }
+
+    private async Task GravarLancamento()
+    {
+        // 1. Validação básica: se não selecionou o tipo, não prossegue
+        if (tipoSelecionado == null) return;
+
+        // 2. Montagem do objeto conforme seu DTO de Capa
+        var novoDocumento = new DocumentsDto
+        {
+            IdTipoDoc = tipoSelecionado.Id,
+            Projeto = unidadeSelecionada,
+            CodDocumento = tipoSelecionado.CodDocumento,
+            // Dados que o Bruno digitou na tela:
+            DataPc = DateOnly.FromDateTime(dataSelecionada),
+            DataDeposito = dataDeposito,
+            CodAgente = tipoSelecionado.CodAgente,
+            Valor = valor,
+
+            // Dados de auditoria e status:
+            Status = "Digitando"
+        };
+
+        try
+        {
+            // 3. O comando POST para o seu Back-end gravar no banco
+            var response = await Http.PostAsJsonAsync("api/Documents/createDocument", novoDocumento);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // 1. Feedback imediato
+                exibirSucesso = true;
+
+                // 2. LIMPEZA IMEDIATA (O segredo para o segundo gravar)
+                valor = 0;
+                // Se o seu select de tipo trava, limpe o objeto selecionado também:
+                // tipoSelecionado = null;
+
+                // 3. ATUALIZA A TABELA E OS CARDS NA HORA
+                await CarregarDocumentos();
+                //await CarregarLancamentos(); // Para atualizar o card preto também!
+
+                StateHasChanged(); // Força o Blazor a redesenhar a tela liberada
+
+                // 4. DEIXE O DELAY POR ÚLTIMO (Lógica de Background)
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(3000);
+                    exibirSucesso = false;
+                    await InvokeAsync(StateHasChanged);
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($">>> ERRO AO GRAVAR: {ex.Message}");
+        }
+    }
+    private async Task CarregarDocumentos()
+    {
+        if (string.IsNullOrEmpty(unidadeSelecionada)) return;
+
+        try
+        {
+            // 1. Limpa a lista atual para garantir que os dados "sumam" da tela enquanto busca
+            documentosDia = new();
+            StateHasChanged();
+
+            var dataFormatada = dataSelecionada.ToString("yyyy-MM-dd");
+            var url = $"api/Documents/getDocumentsByDate/{unidadeSelecionada}/date/{dataFormatada}";
+
+            // 2. Faz a chamada
+            var retorno = await Http.GetFromJsonAsync<List<DocumentsDto>>(url);
+
+            if (retorno != null)
+            {
+                documentosDia = retorno;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            // Se a API retornar 404 ou erro de rede, a lista continua vazia (correto!)
+            Console.WriteLine($">>> API não retornou dados ou está offline: {ex.StatusCode}");
+            documentosDia = new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($">>> ERRO GERAL: {ex.Message}");
+            documentosDia = new();
+        }
+        finally
+        {
+            // 3. Garante que a tela atualize independente de ter dado erro ou não
+            StateHasChanged();
+        }
+    }
+
+    private async Task CarregarLancamentos()
+    {
+        if (string.IsNullOrEmpty(unidadeSelecionada)) return;
+
+        try
+        {
+            // 1. Limpa a lista atual para garantir que os dados "sumam" da tela enquanto busca
+            lancamentosDia = new();
+            StateHasChanged();
+
+            var dataFormatada = dataSelecionada.ToString("yyyy-MM-dd");
+
+            var url = $"api/CapaPc/getCapaPCByDate/{unidadeSelecionada}/date/{dataFormatada}";
+
+            var retorno = await Http.GetFromJsonAsync<List<CapaPcOnlineDto>>(url);
+
+            if (retorno != null)
+            {
+                lancamentosDia = retorno;
+            }
+
+        }
+        catch (HttpRequestException ex)
+        {
+            // Se a API retornar 404 ou erro de rede, a lista continua vazia (correto!)
+            Console.WriteLine($">>> API não retornou dados ou está offline: {ex.StatusCode}");
+            lancamentosDia = new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($">>> ERRO GERAL: {ex.Message}");
+            lancamentosDia = new();
+        }
+        finally
+        {
+            // 3. Garante que a tela atualize independente de ter dado erro ou não
+            StateHasChanged();
+        }
+    }
+    private async Task OnDataChanged(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var novaData))
+        {
+            dataSelecionada = novaData;
+            await CarregarDocumentos();
+            await CarregarLancamentos(); // Busca os dados da nova data selecionada
+            StateHasChanged();
+        }
+    }
+
+    private async Task Deletar(long id)
+    {
+        // 1. Confirmação (Importante para infra não apagar o que não deve!)
+        // Você pode usar o JSInterop para um confirm simples
+        var confirmado = await JS.InvokeAsync<bool>("confirm", "Deseja realmente excluir este documento?");
+
+        if (confirmado)
+        {
+            var response = await Http.DeleteAsync($"api/Documents/deleteDocumentById/{id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // 2. Atualiza a lista na tela sem precisar dar F5
+                documentosDia.RemoveAll(x => x.Id == id);
+                StateHasChanged();
+            }
+            else
+            {
+                // Trata o erro se a API não retornar sucesso
+                Console.WriteLine("Erro ao deletar o documento.");
+            }
+        }
+    }
+    private async Task UpdateStatusToProcessado()
+    {
+
+        var dataFormatada = dataSelecionada.ToString("yyyy-MM-dd");        
+
+        var urlDocuments = $"api/Documents/updateDocumentsStatusByDate/{dataFormatada}/{unidadeSelecionada}/Processado/";
+
+        var urlCapa = $"api/CapaPc/updateStatusByDate/{dataFormatada}/{unidadeSelecionada}/Processado/";
+
+        try
+        {
+            var responseDocs = await Http.PutAsync(urlDocuments, null);
+            var responseCapa = await Http.PutAsync(urlCapa, null);
+            if (responseDocs.IsSuccessStatusCode && responseCapa.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Status atualizado para Processado com sucesso!");
+                await CarregarDocumentos();
+                await CarregarLancamentos();
+            }
+            else
+            {
+                Console.WriteLine("Erro ao atualizar status.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($">>> ERRO AO ATUALIZAR STATUS: {ex.Message}");
+        }
+        
+    }
+
+    
+    // Classe simples para o C# entender o JSON das unidades
+    public class UnidadeDto
+    {
+        public string ideProjeto { get; set; } = "";
+        public string nomProjeto { get; set; } = "";
+    }
+}

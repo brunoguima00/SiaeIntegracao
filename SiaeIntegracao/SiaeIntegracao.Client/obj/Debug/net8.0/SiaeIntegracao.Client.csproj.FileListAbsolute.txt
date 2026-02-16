@@ -1029,6 +1029,13 @@ C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\
 C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\refint\SiaeIntegracao.Client.dll
 C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\SiaeIntegracao.Client.pdb
 C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\ref\SiaeIntegracao.Client.dll
-C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\compressed\ooehtlvw21-3rkjluwqy5.gz
-C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\compressed\bqeust4zuq-91fvyxtsj2.gz
-C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\compressed\7vyvrl3gjg-k5k0leap5c.gz
+C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\bin\Debug\net8.0\wwwroot\_framework\Microsoft.AspNetCore.Components.Authorization.wasm
+C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\bin\Debug\net8.0\wwwroot\_framework\Microsoft.AspNetCore.Components.Authorization.wasm.gz
+C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\bin\Debug\net8.0\Microsoft.AspNetCore.Components.Authorization.dll
+C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\SiaeIntegracao.Client.sourcelink.json
+C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\webcil\Microsoft.AspNetCore.Components.Authorization.wasm
+C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\compressed\1aikhent3p-t6i5ijrmfj.gz
+C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\compressed\ooehtlvw21-5vizrhvmzu.gz
+C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\compressed\bqeust4zuq-tyw6mmsns3.gz
+C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\compressed\7vyvrl3gjg-o40fseoaug.gz
+C:\Users\bruno\source\repos\SiaeIntegracao\SiaeIntegracao\SiaeIntegracao.Client\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

@@ -315,15 +315,25 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Valor)
                 .HasColumnType("decimal(14, 2)")
                 .HasColumnName("valor");
+            entity.Property(e => e.Projeto)
+              .HasMaxLength(7)
+              .IsUnicode(false)
+              .IsFixedLength()
+              .HasColumnName("ide_projeto");
+            entity.Property(e => e.DataDeposito).HasColumnName("data_deposito");
+            entity.Property(e => e.CodAgente)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasColumnName("cod_agente");
+            entity.Property(e => e.IdTipoDoc).HasColumnName("id_tipo_doc");
 
-            entity.HasOne(d => d.CodDocumentoNavigation).WithMany(p => p.PfDocumentos)
-                .HasForeignKey(d => d.CodDocumento)
-                .HasConstraintName("FK__PF_DOCUME__cod_d__3572E547");
+
+
         });
 
         modelBuilder.Entity<PfTipoDoc>(entity =>
         {
-            entity.HasKey(e => e.CodDocumento).HasName("PK__PF_TIPO___161DAB3C361CDE57");
+            entity.HasKey(e => e.Id).HasName("PK_PF_COD_DOCS");
 
             entity.ToTable("PF_TIPO_DOCS");
 
@@ -349,6 +359,22 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("tipo_documento");
+            entity.Property(e => e.CodAgente)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasColumnName("cod_agente");
+            entity.Property(e => e.Banco)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasColumnName("banco");
+            entity.Property(e => e.CodAgencia)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasColumnName("cod_agencia");
+            entity.Property(e => e.ContaCorrente)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasColumnName("conta_corrente");
         });
 
         modelBuilder.Entity<PfTipoLancto>(entity =>

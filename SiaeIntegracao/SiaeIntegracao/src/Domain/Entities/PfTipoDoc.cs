@@ -17,5 +17,13 @@ public partial class PfTipoDoc
 
     public DateTime? DataCriacao { get; set; }
 
-    public virtual ICollection<PfDocumento> PfDocumentos { get; set; } = new List<PfDocumento>();
+    //public virtual ICollection<PfDocumento> PfDocumentos { get; set; } = new List<PfDocumento>();
+
+    public string? CodAgente { get; set; } = string.Empty;
+
+    public string? Banco { get; set; } = string.Empty;
+
+    public string? CodAgencia { get; set; } = string.Empty;
+
+    public string? ContaCorrente { get; set; } = string.Empty;
 }

@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "SiaeIntegracao.Client",
   "resources": {
-    "hash": "sha256-Y6/R9G9JbttORtS/nh/34v8ap3I8S65LqYJdYmk9mF8=",
+    "hash": "sha256-ULxI+S93XW7EaUMq6AoFb8JKUL30CTyrCgWFX9yPJ2o=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-vtotCeXt2UD6oc459laJT32vBgigZ+eLoUmdeFkvYDk="
     },
@@ -20,6 +20,7 @@
     "assembly": {
       "Microsoft.AspNetCore.Authorization.wasm": "sha256-XiUUs33CdZCkYKtpj8YZINjN7OFZ2CNxfz+BsMsGpgw=",
       "Microsoft.AspNetCore.Components.wasm": "sha256-3GL4UpMWSN6UgMyPPak2FdjbSYOFoCAA1XIKZHwcd6U=",
+      "Microsoft.AspNetCore.Components.Authorization.wasm": "sha256-q2a5WW5wCZOOQ4bst4gXUwkqnTBG3H2YWP1GN0SNLQ8=",
       "Microsoft.AspNetCore.Components.Forms.wasm": "sha256-es+EYptZQVIkusS5nyVh+68YppwYyh0qfZAAXZg6TJU=",
       "Microsoft.AspNetCore.Components.Web.wasm": "sha256-yc/lLwBDlvUGL4Tn3K/AMUry16cwvoROS56lEBp7RHo=",
       "Microsoft.AspNetCore.Components.WebAssembly.wasm": "sha256-HOU+mFiZIRlGrd4DVUa0zYFlKe5oo95ay3HerACq12I=",
@@ -209,10 +210,10 @@
       "mscorlib.wasm": "sha256-K9gNrsN9UmPqLs6J/FrkiKpmkVGnHjjqUsc7YGvesCY=",
       "netstandard.wasm": "sha256-4emjlXLM9qW3t2tlII20SDylBgG4ueI0wy9nh5FMd8g=",
       "System.Private.CoreLib.wasm": "sha256-2DN4v7I/tabltDEPdIO8sDBB0tY8zOm+0CvHbMssXW4=",
-      "SiaeIntegracao.Client.wasm": "sha256-z9xRshcd5oIGuvTjtgf+x0T5myzEDTUn25yAPVvpJcU="
+      "SiaeIntegracao.Client.wasm": "sha256-QZmZqd3XPedyPFY4WCiU7C0KX/9ewXCddL+MZ0K2dnI="
     },
     "pdb": {
-      "SiaeIntegracao.Client.pdb": "sha256-3bMLP2CRiWQR9SryKJE8eRlUPONuIfp8/zYofETUXaE="
+      "SiaeIntegracao.Client.pdb": "sha256-ZVqITitWYRcvvJXNElRQ5wmuTHHRWi2qPvYeDcomgkQ="
     }
   },
   "cacheBootResources": true,

@@ -15,5 +15,11 @@ public partial class PfDocumento
 
     public string? Status { get; set; }
 
-    public virtual PfTipoDoc? CodDocumentoNavigation { get; set; }
+    //public virtual PfTipoDoc? CodDocumentoNavigation { get; set; }
+
+    public string Projeto { get; set; } = string.Empty;
+
+    public DateOnly? DataDeposito { get; set; }
+    public string? CodAgente { get; set; } = string.Empty;
+    public int? IdTipoDoc { get; set; }
 }

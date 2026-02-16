@@ -1,132 +1,139 @@
 ﻿@page "/prestacao"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using SiaeIntegracao.src.Domain.Dtos
 @using System.Diagnostics
 @using static System.Net.WebRequestMethods
 @inject HttpClient Http
 @inject IJSRuntime JS
+@inject ProtectedLocalStorage ProtectedLocalStore
+@inject NavigationManager NavigationManager
 
-<div class="container-fluid">
-    @if (exibirSucesso)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <strong>Sucesso!</strong> O lançamento foi registrado no banco de dados.
-            <button type="button" class="btn-close" @onclick="() => exibirSucesso = false"></button>
-        </div>
-    }
-    <h3 class="mb-4">Nova Prestação de Contas</h3>
+@if(isAuthorized)
+{
+    <div class="container-fluid">
+        @if (exibirSucesso)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>Sucesso!</strong> O lançamento foi registrado no banco de dados.
+                <button type="button" class="btn-close" @onclick="() => exibirSucesso = false"></button>
+            </div>
+        }
+        <h3 class="mb-4">Nova Prestação de Contas</h3>
 
-    <div class="card mb-4 border-primary">
-        <div class="card-body bg-light">
-            <div class="row">
-                <div class="col-md-6">
-                    <label class="fw-bold">Unidade / Projeto</label>
-                    <select class="form-select" @onchange="OnUnidadeChanged">
-                        <option>Selecione a unidade...</option>
+        <div class="card mb-4 border-primary">
+            <div class="card-body bg-light">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="fw-bold">Unidade / Projeto</label>
+                        <select class="form-select"  @onchange="OnUnidadeChanged">
+                            <option>Selecione a unidade...</option>
 
-                        @foreach (var u in unidades)
-                        {
-                            // O usuário vê o Nome, mas o C# captura o IdeProjeto
-                            <option value="@u.Projeto">@u.NomeFilial</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="fw-bold">Data</label>
-                    @* Remova o @bind e use essa combinação: *@
-                    <input type="date" class="form-control"
-                           value="@dataSelecionada.ToString("yyyy-MM-dd")"
-                           @onchange="OnDataChanged" />
+                            @foreach (var u in unidades)
+                            {
+                                // O usuário vê o Nome, mas o C# captura o IdeProjeto
+                                <option value="@u.Projeto">@u.NomeFilial</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="fw-bold">Data</label>
+                        @* Remova o @bind e use essa combinação: *@
+                        <input type="date" class="form-control"
+                               value="@dataSelecionada.ToString("yyyy-MM-dd")"
+                               @onchange="OnDataChanged" />
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white">
-                    Registrar Lançamento Prestação de Contas
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-5">
-                            <label>Tipo de Lançamento</label>
-                            <select class="form-select" @onchange="OnTipoChanged">
-                                <option>Selecione (ex: Rotativo, Convênio...)</option>
-                                @foreach (var t in tiposLancamento)
-                                {
-                                    <option value="@t.IdeLancamento">@t.DescricaoLancamento</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label>Quantidade</label>
-                            <input type="number" class="form-control" placeholder="0" @bind="quantidade" />
-                        </div>
-                        <div class="col-md-3">
-                            <label>Valor</label>
-                            <div class="input-group">
-                                <span class="input-group-text">R$</span>
-                                <input type="number" class="form-control" placeholder="0,00" @bind="valor" />
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                        Registrar Lançamento Prestação de Contas
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label>Tipo de Lançamento</label>
+                                <select class="form-select" disabled="@isProcessado" @onchange="OnTipoChanged">
+                                    <option>Selecione (ex: Rotativo, Convênio...)</option>
+                                    @foreach (var t in tiposLancamento)
+                                    {
+                                        <option value="@t.IdeLancamento">@t.DescricaoLancamento</option>
+                                    }
+                                </select>
                             </div>
-                        </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button class="btn btn-success w-100" @onclick="GravarLancamento">
-                                <i class="oi oi-plus"></i> Gravar
-                            </button>
+                            <div class="col-md-2">
+                                <label>Quantidade</label>
+                                <input type="number" class="form-control" placeholder="0" disabled="@isProcessado" @bind="quantidade" />
+                            </div>
+                            <div class="col-md-3">
+                                <label>Valor</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" placeholder="0,00" disabled="@isProcessado" @bind="valor" />
+                                </div>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button class="btn btn-success w-100" disabled="@isProcessado" @onclick="GravarLancamento">
+                                    <i class="oi oi-plus"></i> Gravar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="mt-4 shadow-sm p-3 bg-white rounded">
-        <h5 class="mb-3"><i class="bi bi-list-check"></i> Lançamentos Realizados</h5>
+        <div class="mt-4 shadow-sm p-3 bg-white rounded">
+            <h5 class="mb-3"><i class="bi bi-list-check"></i> Lançamentos Realizados</h5>
 
-        <table class="table table-hover">
-            <thead class="table-light">
-                <tr>
-                    <th>Código</th>
-                    <th>Lançamento</th>
-                    <th>Qtd</th>
-                    <th>Valor Unit.</th>
-                    <th>Status</th>
-                    <th class="text-center">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (lancamentosDoDia.Any())
-                {
-                    @foreach (var item in lancamentosDoDia)
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Lançamento</th>
+                        <th>Qtd</th>
+                        <th>Valor Unit.</th>
+                        <th>Status</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (lancamentosDoDia.Any())
+                    {
+                        @foreach (var item in lancamentosDoDia)
+                        {
+                            <tr>
+                                <td>@item.IdeLancamento</td>
+                                <td>@item.NomeLancamento</td>
+                                <td>@item.Quantidade</td>
+                                <td>@item.Valor?.ToString("C2")</td>
+                                <td>@item.Status</td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-danger" disabled="@isProcessado" title="Excluir" @onclick="() => DeletarLancamento(item.IdLancamento)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
                     {
                         <tr>
-                            <td>@item.IdeLancamento</td>
-                            <td>@item.NomeLancamento</td>
-                            <td>@item.Quantidade</td>
-                            <td>@item.Valor?.ToString("C2")</td>
-                            <td>@item.Status</td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-primary me-1" title="Alterar">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" title="Excluir">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
+                            <td colspan="5" class="text-center text-muted">Nenhum lançamento encontrado para esta data.</td>
                         </tr>
                     }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="5" class="text-center text-muted">Nenhum lançamento encontrado para esta data.</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+} else
+{
+    <p>Verificando acesso...</p>
+}
+
 
 @code {
 
@@ -139,6 +146,8 @@
     private List<CapaPcOnlineDto> lancamentosDoDia = new();
     // 1. Onde vamos guardar as unidades que vêm da API
     public List<FilialDto> unidades = new();
+    public bool isAuthorized;
+    bool isProcessado => lancamentosDoDia.Any(x => x.Status == "Processado");
 
     // 2. Variável para guardar qual unidade o usuário clicou
     private string unidadeSelecionada = "";
@@ -148,6 +157,17 @@
     {
         if (firstRender)
         {
+            var userId = await ProtectedLocalStore.GetAsync<long>("user_id");
+
+            if (userId.Success || userId.Value> 0)
+            {               
+                isAuthorized = true;
+                StateHasChanged();
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/");
+            }
             Debug.WriteLine(">>> O CÓDIGO RODOU! TENTANDO BUSCAR DADOS..."); // Isso tem que aparecer no F12
             try
             {
@@ -267,15 +287,16 @@
             StateHasChanged();
 
             var dataFormatada = dataSelecionada.ToString("yyyy-MM-dd");
+
             var url = $"api/CapaPc/getCapaPCByDate/{unidadeSelecionada}/date/{dataFormatada}";
 
-            // 2. Faz a chamada
             var retorno = await Http.GetFromJsonAsync<List<CapaPcOnlineDto>>(url);
 
             if (retorno != null)
             {
                 lancamentosDoDia = retorno;
             }
+
         }
         catch (HttpRequestException ex)
         {
@@ -300,6 +321,28 @@
         {
             dataSelecionada = novaData;
             await CarregarLancamentos(); // Busca os dados da nova data selecionada
+
+        }
+    }
+    private async Task DeletarLancamento(long id)
+    {
+        var confirmado = await JS.InvokeAsync<bool>("confirm", "Deseja realmente excluir este documento?");
+
+        if (confirmado)
+        {
+            var response = await Http.DeleteAsync($"api/CapaPc/deleteCapaPcById/{id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // 2. Atualiza a lista na tela sem precisar dar F5
+                lancamentosDoDia.RemoveAll(x => x.IdLancamento == id);
+                StateHasChanged();
+            }
+            else
+            {
+                // Trata o erro se a API não retornar sucesso
+                Console.WriteLine("Erro ao deletar o documento.");
+            }
         }
     }
     // Classe simples para o C# entender o JSON das unidades

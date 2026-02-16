@@ -1,6 +1,10 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject NavigationManager NavigationManager
+@inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedSessionStorage ProtectedLocalStore
+@rendermode InteractiveServer
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">SIAE - Prestação Contas</a>
+        <a class="navbar-brand" href="">Prestação de Contas</a>
     </div>
 </div>
 
@@ -16,15 +20,45 @@
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="prestacao">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Prestação de Contas
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Digitação Lançamentos
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+            <NavLink class="nav-link" href="documentos">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Digitação Documentos
             </NavLink>
         </div>
+        <div class="nav-item px-3" style="margin-top: auto; padding-bottom: 1.5rem;">
+            <button class="btn btn-link nav-link w-100 d-flex align-items-center text-start"
+                    @onclick="RealizarLogout"
+                    style="text-decoration: none; color: #d1d1d1; border: none; box-shadow: none;">
+
+                <i class="bi bi-box-arrow-right" style="font-size: 1.25rem; margin-right: 12px; display: flex; align-items: center;"></i>
+                <span style="line-height: 1;">Sair</span>
+
+            </button>
+        </div>
+
     </nav>
 </div>
+
+@code {
+    private async Task RealizarLogout()
+    {
+        try
+        {
+            // Use o exato nome que você usou para gravar no Login
+            await ProtectedLocalStore.DeleteAsync("user_id");
+            await ProtectedLocalStore.DeleteAsync("authToken");
+
+            // O forceLoad: true é vital para resetar o estado do Blazor
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao sair: {ex.Message}");
+        }
+    }
+}
 

@@ -13,5 +13,15 @@
         public string? Contabiliza { get; set; }
 
         public DateTime? DataCriacao { get; set; }
+
+        public string? CodAgente { get; set; } = string.Empty;
+
+        public string? Banco { get; set; } = string.Empty;
+
+        public string? CodAgencia { get; set; } = string.Empty;
+
+        public string? ContaCorrente { get; set; } = string.Empty;
+
+
     }
 }
