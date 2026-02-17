@@ -104,6 +104,14 @@ builder.Services.AddScoped(sp =>
 
 var app = builder.Build();
 
+var supportedCultures = new[] { "pt-BR" };
+var localizationOptions = new RequestLocalizationOptions()
+    .SetDefaultCulture(supportedCultures[0])
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures);
+
+app.UseRequestLocalization(localizationOptions);
+
 //Habilita o Swager, precisa de biblioteca para funcionar
 if (app.Environment.IsDevelopment())
 {
