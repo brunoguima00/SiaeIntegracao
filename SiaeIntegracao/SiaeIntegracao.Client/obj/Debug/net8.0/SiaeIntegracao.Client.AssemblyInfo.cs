@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SiaeIntegracao.Client")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+807ade6986dce283d9b36c9ec2481e0d0f983c17")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2a214392d7c6d13d1c91779f14873cffe9f6238a")]
 [assembly: System.Reflection.AssemblyProductAttribute("SiaeIntegracao.Client")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SiaeIntegracao.Client")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

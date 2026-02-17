@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SiaeIntegracao.Components;
@@ -37,7 +39,7 @@ builder.Services.AddAuthentication(x =>
 })
 .AddJwtBearer(x =>
 {
-    x.RequireHttpsMetadata = false; // Em prod, mude para true
+    x.RequireHttpsMetadata = true; // Em prod, mude para true
     x.SaveToken = true;
     x.TokenValidationParameters = new TokenValidationParameters
     {
@@ -76,14 +78,28 @@ builder.Services.AddScoped<UserSession>();
 
 builder.Services.AddScoped(sp =>
 {
+    // Busca as três dependências necessárias no contêiner do ASP.NET
+    var httpClient = sp.GetRequiredService<HttpClient>();
+    var storage = sp.GetRequiredService<ProtectedLocalStorage>();
+    var navigation = sp.GetRequiredService<NavigationManager>();
+
+    // Cria a ApiService passando os três argumentos na ordem correta
+    return new ApiService(httpClient, storage, navigation);
+});
+
+builder.Services.AddScoped(sp =>
+{
+    var navigationManager = sp.GetRequiredService<NavigationManager>();
+
     var handler = new HttpClientHandler
     {
         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
     };
-    return new HttpClient(handler) { BaseAddress = new Uri("https://localhost:7157/") };
+
+    // Usa a URL base de onde o site está rodando no momento
+    return new HttpClient(handler) { BaseAddress = new Uri(navigationManager.BaseUri) };
 });
 
-builder.Services.AddScoped<ApiService>();
 
 
 var app = builder.Build();
